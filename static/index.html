@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Stock</h1>
+        <div class="dropdown">
+            <button class="dropbtn" id="selectBtn">Choose stock</button>
+            <div class="dropdown-content" id="stockList"></div>
+        </div>
+        <img id="plot" src="" alt="Stock plot" style="display:none;">
+        <div class="error" id="errorMsgStock"></div>
+    </div>
+
+
+    <div class="container">
+        <h1>Model Selection</h1>
+        <div class="dropdown">
+            <button class="dropbtn" id="modelSelectBtn">Choose model</button>
+            <div class="dropdown-content" id="modelList"></div>
+        </div>
+        <div class="error" id="errorMsgModel"></div>
+        <h3>Features:</h3>
+
+        <h4>Lag:</h4>
+        <div>
+            <label>
+                <input type="radio" name="lag" value="lag1">
+                Lag 1
+            </label>
+            <label>
+                <input type="radio" name="lag" value="lag2">
+                Lag 2
+            </label>
+            <label>
+                <input type="radio" name="lag" value="lag3">
+                Lag 3
+            </label>
+            <label>
+                <input type="radio" name="lag" value="lag4">
+                Lag 4
+            </label>
+            <label>
+                <input type="radio" name="lag" value="lag5">
+                Lag 5
+            </label>
+            <label>
+                <input type="radio" name="lag" value="lag6">
+                Lag 6
+            </label>
+            <label>
+                <input type="radio" name="lag" value="lag7">
+                Lag 7
+            </label>
+        </div>
+        
+        <div id="featuresList"></div>
+    </div>
+
+
+    <script src="script.js"></script>
+</body>
+</html>
