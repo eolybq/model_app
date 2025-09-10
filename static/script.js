@@ -6,6 +6,7 @@ const errorMsgStock = document.getElementById('errorMsgStock')
 const errorMsgModel = document.getElementById('errorMsgModel')
 
 
+// ziskani seznamu akcii ze serveru
 fetch('http://localhost:5000/api/stocks')
     .then(res => res.json())
     .then(data => {
@@ -20,6 +21,7 @@ fetch('http://localhost:5000/api/stocks')
     .catch(err => {
         errorMsgStock.textContent = 'Chyba při komunikaci se serverem:' + ' ' + err.message
     })
+
 
 
 // Vytvoření seznamu tlačítek pro akcie
@@ -43,6 +45,9 @@ function capitalizeFirst(str) {
 
 
 
+
+
+
 // Vybrat akcii a načíst graf
 function selectStock(stock) {
     stockChosen = true
@@ -56,6 +61,8 @@ function selectStock(stock) {
     plot.style.display = 'none'
 
     const container = document.getElementById('featuresList')
+
+    modelButtons(models)
 
 
     container.innerHTML = ""
@@ -89,28 +96,51 @@ function selectStock(stock) {
         })
 }
 
-// Skrytí seznamu při kliknutí mimo dropdown
-window.onclick = function(event) {
-    if (!event.target.matches('.dropbtn')) {
-        stockList.style.display = 'none'
-    }
-}
-
-
 
 
 
 // Výběr modelů
+// TODO: mozna dynamicky zas na zaklade souboru s modely?
+// TODO: DODELAT MODEL_PARAMS tak aby sedelo s py -> mozna tam pak nacpat i ty features -> zajistit predani model type, a zbytek params a taky feature na server
+
+let model_params = {
+    "model_type": "",
+    "features": [],
+    "learning_rate": 0.01,
+    "epochs": 100,
+    "batch_size": 32
+}
+
 const models = ['Gradient descent LR', 'Gradient descent logit', 'ARIMA', 'RNN']
 const modelList = document.getElementById('modelList')
 const modelSelectBtn = document.getElementById('modelSelectBtn')
+
+function modelButtons(models) {
+    models.forEach(model => {
+        const btn = document.createElement('button')
+        btn.textContent = model
+        btn.onclick = () => selectModel(model)
+        modelList.appendChild(btn)
+    })
+}
+
+// Zobrazit/skryt seznam modelů
+modelSelectBtn.onclick = () => {
+    modelList.style.display = modelList.style.display === 'block' ? 'none' : 'block'
+}
+
+function selectModel(model) {
+    modelSelectBtn.textContent = model
+    modelList.style.display = 'none'
+    errorMsgModel.textContent = ''
+}
+
 
 
 
 // Dynamický výpis feature checkboxů a lagů
 let availableFeatures = []
 let lagFeatures = {}
-
 
 function showFeatures(features, lag) {
     const container = document.getElementById('featuresList')
