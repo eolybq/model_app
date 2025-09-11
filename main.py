@@ -19,6 +19,7 @@ app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
 
 
+# Poslat seznam dostupných akcií
 @app.route("/api/stocks", methods=["GET"])
 def get_stocks():
     try:
@@ -29,6 +30,16 @@ def get_stocks():
     except Exception as e:
         return {"error": str(e)}, 500
 
+# Poslat seznam dostupných modelů
+@app.route("/api/models", methods=["GET"])
+def get_models():
+    try:
+        files = os.listdir("models") 
+        file_names = [f for f in files if os.path.isfile(os.path.join("models", f))]
+        model_names = [os.path.splitext(f)[0] for f in file_names]
+        return {"models": model_names}, 200
+    except Exception as e:
+        return {"error": str(e)}, 500
 
 
 
@@ -72,38 +83,40 @@ def get_features(stock):
 
 
 # Výchozí parametry modelu
+# TODO: dodělat že if tam nejaky parametr neni tak pouzij default nebo tak nejak?
 model_params = {
     "model_type": "grad",
-    "features": [],
-    "learning_rate": 0.01,
+    "features": {},
+    "learning_rate": 0.001,
     "epochs": 100,
     "batch_size": 32
 }
 
 # Získat parametry modelu
-@app.route("/api/stock/<string:stock>/model", methods=["POST"])
+@app.route("/api/<string:stock>/train", methods=["POST"])
 def get_model(stock):
     try:
         data = request.get_json()
-        print(data)
         if not data:
             return {"error": "No data provided"}, 400
         for param in data:
             if param in model_params:
                model_params[param] = data[param]
-        print(model_params)
+
+        lag_features(load_data(stock), model_params)
+
         return {"message": "Model parameters updated", "model_params": model_params}, 200
     except Exception as e:
         return {"error": str(e)}, 500
 
 # Vytvořit lag features
-def lag_features(df, features):
-    for feature in features:
-        if "_lag" in feature:
-            base_feature = feature[:-5]
-            n_lags = int(feature[-1])
-            df[f"{base_feature}_lag{n_lags}"] = df[base_feature].shift(n_lags)
-    df = df.dropna().reset_index(drop=True)
+def lag_features(df, model_params):
+    for lag in model_params['features']:
+        for feature in model_params['features'][lag]:
+            df[f"{feature}_{lag}"] = df[feature].shift(int(lag))
+
+    print(df.head())
+
     return df
 
 
