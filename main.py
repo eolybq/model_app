@@ -1,15 +1,15 @@
 from flask import Flask
-import datetime
+from flask import request
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
+import datetime
 import pandas as pd
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
-from flask import request
+matplotlib.use('Agg')
 
 load_dotenv()
 
