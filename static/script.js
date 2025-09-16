@@ -59,7 +59,7 @@ selectBtn.onclick = () => {
 }
 
 function clearCapitalizeFirst(str) {
-    clearSr = str.replace(/_/g, ' ').replace(/-/g, ' ') 
+    const clearSr = str.replace(/_/g, ' ').replace(/-/g, ' ') 
     return clearSr.charAt(0).toUpperCase() + clearSr.slice(1)
 }
 
