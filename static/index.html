@@ -13,7 +13,9 @@
             <button class="dropbtn" id="selectBtn">Choose stock</button>
             <div class="dropdown-content" id="stockList"></div>
         </div>
-        <img id="plot" src="" alt="Stock plot" style="display:none;">
+        <!-- NOTE: Graf ze serveru -->
+        <!-- <img id="plot" src="" alt="Stock plot" style="display:none;"> -->
+         <div id = "plot"></div>
         <div class="error" id="errorMsgStock"></div>
     </div>
 
@@ -75,6 +77,7 @@
     <div>
 
 
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
+    <script src="https://cdn.plot.ly/plotly-3.1.0.min.js" charset="utf-8"></script>
 </body>
 </html>

@@ -5,11 +5,8 @@ from dotenv import load_dotenv
 import os
 import datetime
 import pandas as pd
-import matplotlib
-import matplotlib.pyplot as plt
 from io import BytesIO
 import base64
-matplotlib.use('Agg')
 
 load_dotenv()
 
@@ -30,6 +27,7 @@ def get_stocks():
     except Exception as e:
         return {"error": str(e)}, 500
 
+
 # Poslat seznam dostupných modelů
 @app.route("/api/models", methods=["GET"])
 def get_models():
@@ -42,30 +40,19 @@ def get_models():
         return {"error": str(e)}, 500
 
 
-
 def load_data(stock):
     data = pd.read_csv(f"data/{stock}.csv")
     return data
 
-# Poslat obrazek jako base64
-def df_to_base64(df):
-    fig, ax = plt.subplots()
-    ax.plot(df["date"], df["adjusted"])
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Close')
-    ax.set_title("Stock price")
-    buf = BytesIO()
-    fig.savefig(buf, format="png")
-    buf.seek(0)
-    plt.close(fig)
-    return base64.b64encode(buf.read()).decode("utf-8")
-@app.route("/api/stock/<string:stock>", methods=["GET"])
-def get_stock_plot(stock):
+
+# Poslat adjusted close data
+@app.route("/api/stock/<string:stock>/data", methods=["GET"])
+def get_stock_data(stock):
     try:
         data = load_data(stock)
-        print(stock)
-        img_base64 = df_to_base64(data)
-        return {"image": img_base64}, 200
+        data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
+        data = data[["date", "adjusted"]].to_dict(orient="records")
+        return {"data": data}, 200
     except Exception as e:
         return {"error": str(e)}, 500
 
@@ -83,7 +70,6 @@ def get_features(stock):
 
 
 # Výchozí parametry modelu
-# TODO: dodělat že if tam nejaky parametr neni tak pouzij default nebo tak nejak?
 model_params = {
     "model_type": "grad",
     "features": {},
@@ -94,7 +80,7 @@ model_params = {
 
 # Získat parametry modelu
 @app.route("/api/<string:stock>/train", methods=["POST"])
-def get_model(stock):
+def post_model(stock):
     try:
         data = request.get_json()
         if not data:
@@ -103,21 +89,21 @@ def get_model(stock):
             if param in model_params:
                model_params[param] = data[param]
 
-        lag_features(load_data(stock), model_params)
+        lag_df = lag_features(load_data(stock), model_params["features"])
 
         return {"message": "Model parameters updated", "model_params": model_params}, 200
     except Exception as e:
         return {"error": str(e)}, 500
 
+
 # Vytvořit lag features
-def lag_features(df, model_params):
-    for lag in model_params['features']:
-        for feature in model_params['features'][lag]:
-            df[f"{feature}_{lag}"] = df[feature].shift(int(lag))
+def lag_features(df, features):
+    lag_df = pd.DataFrame()
+    for lag in features:
+        for feature in features[lag]:
+            lag_df[f"{feature}_{lag}"] = df[feature].shift(int(lag))
 
-    print(df.head())
-
-    return df
+    return lag_df
 
 
 

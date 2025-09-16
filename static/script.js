@@ -1,3 +1,5 @@
+import { drawChart } from './chart.js'
+
 let stockChosen = null
 let modelChosen = null
 const stockList = document.getElementById('stockList')
@@ -17,11 +19,11 @@ fetch('http://localhost:5000/api/stocks')
 
             stockButtons(availableStocks)
         } else {
-            errorMsgStock.textContent = data.error || 'Chyba při načítání dat.'
+            errorMsgStock.textContent = data.error || 'Error while loading data.'
         }
     })
     .catch(err => {
-        errorMsgStock.textContent = 'Chyba při komunikaci se serverem:' + ' ' + err.message
+        errorMsgStock.textContent = 'Error while communicating with server:' + ' ' + err.message
     })
 
 
@@ -33,11 +35,11 @@ fetch('http://localhost:5000/api/models')
         if (data.models) {
             availableModels = data.models
         } else {
-            errorMsgModel.textContent = data.error || 'Chyba při načítání dat.'
+            errorMsgModel.textContent = data.error || 'Error while loading data.'
         }
     })
     .catch(err => {
-        errorMsgModel.textContent = 'Chyba při komunikaci se serverem:' + ' ' + err.message
+        errorMsgModel.textContent = 'Error while communicating with server:' + ' ' + err.message
     })
 
 
@@ -56,8 +58,9 @@ selectBtn.onclick = () => {
     stockList.style.display = stockList.style.display === 'block' ? 'none' : 'block'
 }
 
-function capitalizeFirst(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1)
+function clearCapitalizeFirst(str) {
+    clearSr = str.replace(/_/g, ' ').replace(/-/g, ' ') 
+    return clearSr.charAt(0).toUpperCase() + clearSr.slice(1)
 }
 
 
@@ -79,23 +82,27 @@ function selectStock(stock) {
 
     const container = document.getElementById('featuresList')
 
+    container.innerHTML = ""
+
     modelButtons(availableModels)
 
 
-    container.innerHTML = ""
-    fetch(`http://localhost:5000/api/stock/${stock}`)
+    // graf na client side
+    fetch(`http://localhost:5000/api/stock/${stock}/data`)
         .then(res => res.json())
         .then(data => {
-            if (data.image) {
-                plot.src = `data:image/png;base64,${data.image}`
+            if (data.data) {
                 plot.style.display = 'block'
+                drawChart(plot, data.data, stockChosen.toUpperCase())
             } else {
-                errorMsgStock.textContent = data.error || 'Chyba při načítání dat.'
+                errorMsgStock.textContent = data.error || 'Error while loading data.'
             }
         })
         .catch(() => {
-            errorMsgStock.textContent = 'Chyba při komunikaci se serverem.'
+            errorMsgStock.textContent = 'Error while communicating with server.'
         })
+
+
     
     fetch(`http://localhost:5000/api/get_features/${stock}`)
         .then(res => res.json())
@@ -105,11 +112,11 @@ function selectStock(stock) {
                 const features = data.features
                 availableFeatures = features
             } else {
-                errorMsgModel.textContent = data.error || 'Chyba při načítání dat.'
+                errorMsgModel.textContent = data.error || 'Error while loading data.'
             }
         })
         .catch(() => {
-            errorMsgModel.textContent = 'Chyba při komunikaci se serverem.'
+            errorMsgModel.textContent = 'Error while communicating with server.'
         })
 }
 
@@ -117,11 +124,6 @@ function selectStock(stock) {
 
 
 // Výběr modelů
-// TODO: DODELAT MODEL_PARAMS tak aby sedelo s py -> mozna tam pak nacpat i ty features -> zajistit predani model type, a zbytek params a taky feature na server
-
-//TODO: smazat - vytvorit ten objekt az posilam
-let modelParams = {}
-
 const modelList = document.getElementById('modelList')
 const modelSelectBtn = document.getElementById('modelSelectBtn')
 
@@ -154,8 +156,6 @@ function selectModel(model) {
     modelSelectBtn.textContent = clearModelName(model)
     modelList.style.display = 'none'
     errorMsgModel.textContent = ''
-
-    modelParams.model_type = model
 }
 
 
@@ -181,7 +181,7 @@ function showFeatures(features, lag) {
             checkbox.checked = true
         }
         label.appendChild(checkbox)
-        label.appendChild(document.createTextNode(' ' + capitalizeFirst(feature)))
+        label.appendChild(document.createTextNode(' ' + clearCapitalizeFirst(feature)))
         container.appendChild(label)
     })
 }
@@ -191,7 +191,6 @@ function saveFeatures(lag) {
     const checkedFeatures = Array.from(
         container.querySelectorAll('input[type="checkbox"]:checked')
     ).map(cb => cb.value)
-    // const laggedFeatures = checkedFeatures.map(f => `${f}_${lag}`)
 
     lagFeatures[lag] = checkedFeatures
 }
@@ -200,11 +199,11 @@ const radios = document.querySelectorAll('input[type="radio"][name="lag"]')
 radios.forEach(radio => {
     radio.addEventListener('change', function() {
         if (stockChosen == null) {
-            alert('Nejprve vyberte akcii.')
+            alert('Choose a stock first.')
             this.checked = false
             return
         } else if (modelChosen == null) {
-            alert('Nejprve vyberte model.')
+            alert('Choose a model first.')
             this.checked = false
             return
         } else {
@@ -264,18 +263,19 @@ const trainBtn = document.getElementById('trainBtn')
 trainBtn.onclick = () => {
     errorMsgModel.textContent = ''
 
+    if (window.currentLag) {
+        saveFeatures(window.currentLag)
+    }
+
     if (stockChosen == null) {
-        errorMsgModel.textContent = 'Nejprve vyberte akcii.'
+        errorMsgStock.textContent = 'Choose a stock first.'
         return
     } else if (modelChosen == null) {
-        errorMsgModel.textContent = 'Nejprve vyberte model.'
+        errorMsgModel.textContent = 'Choose a model first.'
         return
-    // TODO: Dodelat podminky pro nevybrany features
-
-    // } else if (!window.currentLag) {
-    //     errorMsgModel.textContent = 'Nejprve vyberte lag.'
-    //     return
-    // }
+    } else if (Object.values(lagFeatures).map(arr => !arr.length).every(x => x === true)) {
+        errorMsgModel.textContent = 'Select atleast one feature first.'
+        return
     } else {
         trainModel()
     }
@@ -283,11 +283,9 @@ trainBtn.onclick = () => {
 
 
 function trainModel() {
-    // Ulož výběr pro poslední lag
-    if (window.currentLag) {
-        saveFeatures(window.currentLag)
-    }
+    let modelParams = {}
 
+    modelParams.model_type = modelChosen
     modelParams.features = lagFeatures
     modelParams.learning_rate = parseFloat(lrNumberInput.value)
     modelParams.epochs = parseInt(eNumberInput.value)
@@ -306,10 +304,10 @@ function trainModel() {
                 errorMsgModel.style.color = 'green'
                 errorMsgModel.textContent = data.message
             } else {
-                errorMsgModel.textContent = data.error || 'Chyba při trénování modelu.'
+                errorMsgModel.textContent = data.error || 'Error while training model.'
             }
         })
         .catch(() => {
-            errorMsgModel.textContent = 'Chyba při komunikaci se serverem.'
+            errorMsgModel.textContent = 'Error while communicating with server.'
         })
 }
