@@ -1,10 +1,11 @@
-import { drawChart } from './chart.js'
+import { drawChart } from './charts.js'
 
 let stockChosen = null
 let modelChosen = null
 const stockList = document.getElementById('stockList')
 const selectBtn = document.getElementById('selectBtn')
 const plot = document.getElementById('plot')
+const showDataBtn = document.getElementById('showData')
 const errorMsgStock = document.getElementById('errorMsgStock')
 const errorMsgModel = document.getElementById('errorMsgModel')
 
@@ -79,6 +80,8 @@ function selectStock(stock) {
     errorMsgStock.textContent = ''
     errorMsgModel.textContent = ''
     plot.style.display = 'none'
+    showDataBtn.style.display = 'none'
+
 
     const container = document.getElementById('featuresList')
 
@@ -88,12 +91,15 @@ function selectStock(stock) {
 
 
     // graf na client side
-    fetch(`http://localhost:5000/api/stock/${stock}/data`)
+    fetch(`http://localhost:5000/api/stock/${stock}/adjusted`)
         .then(res => res.json())
         .then(data => {
             if (data.data) {
                 plot.style.display = 'block'
                 drawChart(plot, data.data, stockChosen.toUpperCase())
+
+                // tlacitko pro prolhidku dat dostupne
+                showDataBtn.style.display = 'block'
             } else {
                 errorMsgStock.textContent = data.error || 'Error while loading data.'
             }
@@ -103,7 +109,7 @@ function selectStock(stock) {
         })
 
 
-    
+    // ziskani vsechny dostupne features pro danou akcii
     fetch(`http://localhost:5000/api/get_features/${stock}`)
         .then(res => res.json())
         .then(data => {
@@ -119,6 +125,67 @@ function selectStock(stock) {
             errorMsgModel.textContent = 'Error while communicating with server.'
         })
 }
+
+
+// funkce na zobrazeni dat v tabulatorJS
+let table
+
+function showData(data) {
+    if (!table) {
+        table = new Tabulator('#dataContent', {
+            height: 900,
+            data: data,
+            layout: "fitDataStretch",
+            autoColumns: true,
+            responsiveLayout: false,   // jinak by některé sloupce mizely
+        })
+    } else {
+        table.setData(data)
+    }
+}
+
+
+// zavreni tabulky dat - bud klik vedle nebo esc
+function closeTableHandler(e) {
+    const dataContent = document.getElementById("dataContent")
+    if (!dataContent.contains(e.target)) {
+        document.getElementById("dataTable").style.display = "none"
+        document.getElementById("dataTable").removeEventListener("mousedown", closeTableHandler)
+        document.removeEventListener("keydown", escTableHandler)
+    }
+}
+
+function escTableHandler(e) {
+    if (e.key === "Escape") {
+        document.getElementById("dataTable").style.display = "none"
+        document.getElementById("dataTable").removeEventListener("mousedown", closeTableHandler)
+        document.removeEventListener("keydown", escTableHandler)
+    }
+}
+
+
+// Zobrazit/skryt data prohlizec
+showDataBtn.onclick = () => {
+    document.getElementById("dataTable").style.display = "block"
+
+    document.getElementById("dataTable").addEventListener("mousedown", closeTableHandler)
+    document.addEventListener("keydown", escTableHandler)
+
+
+    fetch(`http://localhost:5000/api/stock/${stockChosen}/data`)
+    .then(res => res.json())
+    .then(data => {
+        if (data.data) {
+            showData(data.data) 
+        } else {
+            errorMsgStock.textContent = data.error || 'Error while loading data.'
+        }
+    })
+    .catch(() => {
+        errorMsgStock.textContent = 'Error while communicating with server.'
+    })
+}
+
 
 
 
@@ -195,6 +262,7 @@ function saveFeatures(lag) {
     lagFeatures[lag] = checkedFeatures
 }
 
+// zmena lagu a ukladani vybranych features
 const radios = document.querySelectorAll('input[type="radio"][name="lag"]')
 radios.forEach(radio => {
     radio.addEventListener('change', function() {
@@ -259,6 +327,7 @@ lrNumberInput.addEventListener('input', () => {
 })
 
 
+// podminky pro validitu vstupnich parametru do modelu
 const trainBtn = document.getElementById('trainBtn')
 trainBtn.onclick = () => {
     errorMsgModel.textContent = ''
@@ -282,6 +351,7 @@ trainBtn.onclick = () => {
 }
 
 
+// Odeslání požadavku na trénování modelu
 function trainModel() {
     let modelParams = {}
 

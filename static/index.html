@@ -5,28 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator_midnight.min.css" rel="stylesheet">
 </head>
 <body>
+
     <div class="container">
+
         <h1>Stock</h1>
         <div class="dropdown">
             <button class="dropbtn" id="selectBtn">Choose stock</button>
             <div class="dropdown-content" id="stockList"></div>
         </div>
-        <div id="plot"></div>
-        <button id="showData">Show Data</button>
-        <!-- TODO: dodělat overlay pro prohlizec dat -->
         <div class="error" id="errorMsgStock"></div>
+
+        <div id="plot"></div>
+
+        <button id="showData">Show Data</button>
+        <div id="dataTable">
+            <div id="dataContent"></div>
+        </div>
+
     </div>
 
 
     <div class="container">
+
         <h1>Model Selection</h1>
         <div class="dropdown">
             <button class="dropbtn" id="modelSelectBtn">Choose model</button>
             <div class="dropdown-content" id="modelList"></div>
         </div>
         <div class="error" id="errorMsgModel"></div>
+
         <h3>Features:</h3>
 
         <h4>Lag:</h4>
@@ -79,5 +89,6 @@
 
     <script type="module" src="script.js"></script>
     <script src="https://cdn.plot.ly/plotly-3.1.0.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
 </body>
 </html>

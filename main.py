@@ -46,12 +46,24 @@ def load_data(stock):
 
 
 # Poslat adjusted close data
-@app.route("/api/stock/<string:stock>/data", methods=["GET"])
+@app.route("/api/stock/<string:stock>/adjusted", methods=["GET"])
 def get_stock_data(stock):
     try:
         data = load_data(stock)
         data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
         data = data[["date", "adjusted"]].to_dict(orient="records")
+        return {"data": data}, 200
+    except Exception as e:
+        return {"error": str(e)}, 500
+
+
+# Poslat cely df
+@app.route("/api/stock/<string:stock>/data", methods=["GET"])
+def get_full_data(stock):
+    try:
+        data = load_data(stock)
+        data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
+        data = data.to_dict(orient="records")
         return {"data": data}, 200
     except Exception as e:
         return {"error": str(e)}, 500
