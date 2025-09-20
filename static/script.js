@@ -130,17 +130,18 @@ function selectStock(stock) {
 // funkce na zobrazeni dat v tabulatorJS
 let table
 
-function showData(data) {
+function showData(columns, rows) {
     if (!table) {
         table = new Tabulator('#dataContent', {
             height: 900,
-            data: data,
+            data: rows,
             layout: "fitDataStretch",
-            autoColumns: true,
+            // autoColumns: true,
+            columns: columns,
             responsiveLayout: false,   // jinak by některé sloupce mizely
         })
     } else {
-        table.setData(data)
+        table.setData(rows)
     }
 }
 
@@ -175,8 +176,14 @@ showDataBtn.onclick = () => {
     fetch(`http://localhost:5000/api/stock/${stockChosen}/data`)
     .then(res => res.json())
     .then(data => {
-        if (data.data) {
-            showData(data.data) 
+        if (data.df) {
+            // FIX: nefunguje vubec nejak udelat aby zustalo poradi columns ze serveru
+            const columns = data.df.columns
+            const rows = data.df.data.map(row =>
+                Object.fromEntries(columns.map((col, i) => [col, row[i]]))
+            )
+            console.log(rows)
+            showData(columns, rows)
         } else {
             errorMsgStock.textContent = data.error || 'Error while loading data.'
         }

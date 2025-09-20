@@ -63,8 +63,9 @@ def get_full_data(stock):
     try:
         data = load_data(stock)
         data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
-        data = data.to_dict(orient="records")
-        return {"data": data}, 200
+        # FIX: nefunguje - udelat aby zustalo toto poradi columns
+        df = data.to_dict(orient="split")
+        return {"data": df}, 200
     except Exception as e:
         return {"error": str(e)}, 500
 
