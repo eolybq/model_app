@@ -12,7 +12,7 @@ const errorMsgModel = document.getElementById('errorMsgModel')
 
 let availableStocks = []
 // ziskani seznamu akcii ze serveru
-fetch('http://localhost:5000/api/stocks')
+fetch('http://localhost:5055/api/stocks')
     .then(res => res.json())
     .then(data => {
         if (data.stocks) {
@@ -30,7 +30,7 @@ fetch('http://localhost:5000/api/stocks')
 
 let availableModels = []
 // ziskani vsechny dostupne modely
-fetch('http://localhost:5000/api/models')
+fetch('http://localhost:5055/api/models')
     .then(res => res.json())
     .then(data => {
         if (data.models) {
@@ -91,7 +91,7 @@ function selectStock(stock) {
 
 
     // graf na client side
-    fetch(`http://localhost:5000/api/stock/${stock}/adjusted`)
+    fetch(`http://localhost:5055/api/stock/${stock}/adjusted`)
         .then(res => res.json())
         .then(data => {
             if (data.data) {
@@ -110,7 +110,7 @@ function selectStock(stock) {
 
 
     // ziskani vsechny dostupne features pro danou akcii
-    fetch(`http://localhost:5000/api/get_features/${stock}`)
+    fetch(`http://localhost:5055/api/get_features/${stock}`)
         .then(res => res.json())
         .then(data => {
 
@@ -173,7 +173,7 @@ showDataBtn.onclick = () => {
     document.addEventListener("keydown", escTableHandler)
 
 
-    fetch(`http://localhost:5000/api/stock/${stockChosen}/data`)
+    fetch(`http://localhost:5055/api/stock/${stockChosen}/data`)
     .then(res => res.json())
     .then(data => {
         if (data.df) {
@@ -368,7 +368,7 @@ function trainModel() {
     modelParams.epochs = parseInt(eNumberInput.value)
 
 
-    fetch(`http://localhost:5000/api/${stockChosen}/train`, {
+    fetch(`http://localhost:5055/api/${stockChosen}/train`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"

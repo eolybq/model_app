@@ -65,6 +65,7 @@ def get_full_data(stock):
         data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
         # FIX: nefunguje - udelat aby zustalo toto poradi columns
         df = data.to_dict(orient="split")
+        print(df)
         return {"data": df}, 200
     except Exception as e:
         return {"error": str(e)}, 500
@@ -121,4 +122,4 @@ def lag_features(df, features):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug = True, host = "localhost", port = 5055)
