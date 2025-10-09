@@ -3,10 +3,7 @@ from flask import request
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
-import datetime
 import pandas as pd
-from io import BytesIO
-import base64
 
 load_dotenv()
 
@@ -15,15 +12,16 @@ CORS(app)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
 
-
-# Poslat seznam dostupných akcií
-@app.route("/api/stocks", methods=["GET"])
-def get_stocks():
+# Dostani tickeru z frontendu
+@app.route("/api/ticker", methods=["POST"])
+def post_ticker():
     try:
-        files = os.listdir("data") 
-        file_names = [f for f in files if os.path.isfile(os.path.join("data", f))]
-        stock_names = [os.path.splitext(f)[0] for f in file_names]
-        return {"stocks": stock_names}, 200
+        data = request.get_json()
+        if not data or "ticker" not in data:
+            return {"error": "No ticker provided"}, 400
+        ticker = data["ticker"].upper()
+        df = fetch_stock_data(ticker, data["period"], data["interval"])
+        return {"status": "ok"}, 200
     except Exception as e:
         return {"error": str(e)}, 500
 
@@ -40,11 +38,6 @@ def get_models():
         return {"error": str(e)}, 500
 
 
-def load_data(stock):
-    data = pd.read_csv(f"data/{stock}.csv")
-    return data
-
-
 # Poslat adjusted close data
 @app.route("/api/stock/<string:stock>/adjusted", methods=["GET"])
 def get_stock_data(stock):
@@ -57,21 +50,8 @@ def get_stock_data(stock):
         return {"error": str(e)}, 500
 
 
-# Poslat cely df
-@app.route("/api/stock/<string:stock>/data", methods=["GET"])
-def get_full_data(stock):
-    try:
-        data = load_data(stock)
-        data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
-        # FIX: nefunguje - udelat aby zustalo toto poradi columns
-        df = data.to_dict(orient="split")
-        print(df)
-        return {"data": df}, 200
-    except Exception as e:
-        return {"error": str(e)}, 500
-
-
 # Poslat dostupné feature
+# Udělat fixní list features ktere lze vytvorit z dat -> budou se vytvaret ve prepare_features
 @app.route("/api/get_features/<string:stock>", methods=["GET"])
 def get_features(stock):
     try:
@@ -109,15 +89,6 @@ def post_model(stock):
     except Exception as e:
         return {"error": str(e)}, 500
 
-
-# Vytvořit lag features
-def lag_features(df, features):
-    lag_df = pd.DataFrame()
-    for lag in features:
-        for feature in features[lag]:
-            lag_df[f"{feature}_{lag}"] = df[feature].shift(int(lag))
-
-    return lag_df
 
 
 

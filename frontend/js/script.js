@@ -9,6 +9,8 @@ const showDataBtn = document.getElementById('showData')
 const errorMsgStock = document.getElementById('errorMsgStock')
 const errorMsgModel = document.getElementById('errorMsgModel')
 
+// TODO: pridat i monznost zvoleni frekvence dat (denni, tydenni, mesicni)
+// pridat input pro sticker name akcie
 
 let availableStocks = []
 // ziskani seznamu akcii ze serveru
