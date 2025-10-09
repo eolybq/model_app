@@ -1,9 +1,11 @@
-from flask import Flask
-from flask import request
+from flask import Flask, request, session
 from flask_cors import CORS
 from dotenv import load_dotenv
 import os
 import pandas as pd
+
+from services.data_manipulation import fetch_save_ticker
+
 
 load_dotenv()
 
@@ -12,7 +14,7 @@ CORS(app)
 app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
 
 
-# Dostani tickeru z frontendu
+# Dostani tickeru z frontend a ulozeni dat
 @app.route("/api/ticker", methods=["POST"])
 def post_ticker():
     try:
@@ -20,8 +22,11 @@ def post_ticker():
         if not data or "ticker" not in data:
             return {"error": "No ticker provided"}, 400
         ticker = data["ticker"].upper()
-        df = fetch_stock_data(ticker, data["period"], data["interval"])
-        return {"status": "ok"}, 200
+        session['selected_ticker'] = ticker
+        df = fetch_save_ticker(ticker, data["period"], data["interval"])
+
+        data_to_frontend = df[["date", "adjusted"]].to_dict(orient="records")
+        return {"data": data_to_frontend}, 200
     except Exception as e:
         return {"error": str(e)}, 500
 
@@ -38,20 +43,8 @@ def get_models():
         return {"error": str(e)}, 500
 
 
-# Poslat adjusted close data
-@app.route("/api/stock/<string:stock>/adjusted", methods=["GET"])
-def get_stock_data(stock):
-    try:
-        data = load_data(stock)
-        data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
-        data = data[["date", "adjusted"]].to_dict(orient="records")
-        return {"data": data}, 200
-    except Exception as e:
-        return {"error": str(e)}, 500
-
-
 # Poslat dostupné feature
-# Udělat fixní list features ktere lze vytvorit z dat -> budou se vytvaret ve prepare_features
+# TODO: Udělat fixní list features ktere lze vytvorit z dat -> budou se vytvaret ve prepare_features
 @app.route("/api/get_features/<string:stock>", methods=["GET"])
 def get_features(stock):
     try:
@@ -73,8 +66,8 @@ model_params = {
 }
 
 # Získat parametry modelu
-@app.route("/api/<string:stock>/train", methods=["POST"])
-def post_model(stock):
+@app.route("/api/train", methods=["POST"])
+def post_model():
     try:
         data = request.get_json()
         if not data:
@@ -82,6 +75,8 @@ def post_model(stock):
         for param in data:
             if param in model_params:
                model_params[param] = data[param]
+
+        # TODO: train_model(model_params, session['selected_ticker'])
 
         lag_df = lag_features(load_data(stock), model_params["features"])
 
