@@ -1,35 +1,83 @@
 import yfinance as yf
 import pandas as pd
+import numpy as np
 
+
+# fetch a ulozeni z yahoo finance
 def fetch_save_ticker(ticker):
-    """
-    Fetch and save historical stock data from Yahoo Finance to csv.
-
-    Parameters:
-    - ticker (str): Stock ticker symbol (e.g., "TSLA").
-
-    Returns:
-    - pd.DataFrame: DataFrame containing historical stock data.
-    """
+    # TODO: osetrit pokud ticker neexistuje
+    ticker = ticker.upper()
     stock = yf.Ticker(ticker)
     data = stock.history(period='max', interval='1d')
 
-    data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
-    data.to_csv(f"data/{ticker}.csv")
+    # odstraneni timezone
+    data.index = data.index.tz_localize(None)
 
+    data.columns = data.columns.str.lower()
+    print(data)
+
+    # presun date z indexu do sloupce a vytvoreni ciselneho indexu -> lepsi manipulace s daty
+    data = data.reset_index(names='date')
+    data['date'] = pd.to_datetime(data['date'])
+
+    data["log_return"] = np.log(data["close"] / data["close"].shift(1))
+    data = data.drop(columns=['dividends', 'stock splits'], axis=1)
+
+    data.to_csv(f"data/{ticker}.csv", index=False)
     return data
 
 
-def load_user_data(ticker, period, interval):
-    """
-    Takes
-    - ticker (str): Stock ticker symbol (e.g., "TSLA").
-    - period (str): Data period ("1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max").
-    - interval (str): Data interval ("1d", "1wk", "1mo", etc.).
-    """
+# nahrani dat z csv, orezani dle start a end, prevod na zvoleny interval
+def load_user_data(ticker, start, end, interval="1d"):
+    ticker = ticker.upper()
+    df = pd.read_csv(f"data/{ticker}.csv")
+    df['date'] = pd.to_datetime(df['date'])
 
-# TODO: mozna neco z tohoto?:
+    start = start
+    end = end
+
+    df = df[(df["date"] >= start) & (df["date"] <= end)]
+
+    if interval == "1week":
+        # Weekly OHLCV s obchodní den nastaveno na realny posledni obchodni den v tydnu
+        df = df.groupby(pd.Grouper(key='Date', freq='W-FRI'), as_index = False).agg({
+            "date": "last",
+            "open": "first",
+            "high": "max",
+            "low": "min",
+            "close": "last",
+            "volume": "sum"
+            
+        })
+
+    if interval == "1month":
+        # Monthly OHLCV s obchodní den realny posledni obchodni den v mesici
+        df = df.groupby(pd.Grouper(key='Date', freq='M'), as_index = False).agg({
+            "date": "last",
+            "open": "first",
+            "high": "max",
+            "low": "min",
+            "close": "last",
+            "volume": "sum"
+        })
+
+    if interval == "3month":
+        # Monthly OHLCV s obchodní den realny posledni obchodni den v mesici
+        df = df.groupby(pd.Grouper(key='Date', freq='3M'), as_index = False).agg({
+            "date": "last",
+            "open": "first",
+            "high": "max",
+            "low": "min",
+            "close": "last",
+            "volume": "sum"
+        })
+
+    return df
+
+
+
 '''
+TODO: mozna neco z tohoto?:
 # 2. Info o firmě
 Volitelné parametry:
 auto_adjust=True (přepočítá ceny o splity a dividendy)

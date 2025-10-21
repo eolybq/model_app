@@ -37,19 +37,21 @@ h1 { text-align: center; color: #333; }
 .dropdown-content button:hover {
     background-color: #e6f0ff;
 }
+
+
+#stockDataInputs {
+    display: none;
+}
+
+
 #plot { display: block; margin: 32px auto 0 auto; max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px #0001; }
 .error { color: #d00; text-align: center; margin-top: 20px; }
-
 
 #modelParams {
     margin-bottom: 1rem; /* mezera mezi bloky */
     display: flex;
     flex-direction: column; /* vše v bloku pod sebe */
     max-width: 250px; /* aby to nebylo přes celou šířku */
-}
-
-#showData {
-    display: none;
 }
 
 #dataTable {

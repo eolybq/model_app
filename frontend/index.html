@@ -12,18 +12,30 @@
     <div class="container">
 
         <h1>Stock</h1>
-        <div class="dropdown">
-            <button class="dropbtn" id="selectBtn">Choose stock</button>
-            <div class="dropdown-content" id="stockList"></div>
+        <input type="text" id="stockInput" placeholder="Enter stock symbol (e.g., AAPL)">
+        <button id="fetchStockBtn" type="button">Fetch Stock Data</button>
+
+        <div id="stockDataInputs">
+            <label for="startDate">Start date:</label>
+            <input type="date" id="startDate" name="startDate" aria-label="Start date">
+
+            <label for="endDate">End date:</label>
+            <input type="date" id="endDate" name="endDate" aria-label="End date">
+
+            <div class="dropdown">
+                <button class="dropbtn" id="freqSelectBtn">Choose timeframe</button>
+                <div class="dropdown-content" id="freqList">
+                    <button class="freqOption" data-value="1d">1 Day</button>
+                    <button class="freqOption" data-value="1week">1 Week</button>
+                    <button class="freqOption" data-value="1month">1 Month</button>
+                    <button class="freqOption" data-value="3month">3 Months</button>
+                </div>
+            </div>
         </div>
+
         <div class="error" id="errorMsgStock"></div>
 
         <div id="plot"></div>
-
-        <button id="showData">Show Data</button>
-        <div id="dataTable">
-            <div id="dataContent"></div>
-        </div>
 
     </div>
 
@@ -74,6 +86,10 @@
         <div id="featuresList"></div>
 
         <div id ="modelParams">
+            <label for="ttSplit">Train/Test Split:</label>
+            <input type="range" id="ttSplitSlider" name="ttSplit" min="0" max="100" step="1" value="80">
+            <input type="number" id="ttSplitNumber" name="ttSplit" min="0" max="100" step="1" value="80">
+
             <label for="learningRate">Learning Rate:</label>
             <input type="range" id="learningRateSlider" name="learningRate" min="0.0001" max="1" step="0.0001" value="0.001">
             <input type="number" id="learningRateNumber" name="learningRate" min="0.0001" max="1" step="0.001" value="0.001">
@@ -81,6 +97,11 @@
             <label for="epochs">Epochs:</label>
             <input type="range" id="epochsSlider" name="epochs" min="100" max="10000" step="100" value="100">
             <input type="number" id="epochsNumber" name="epochs" min="100" max="10000" step="100" value="100">
+        </div>
+
+        <button id="showData">Show Data</button>
+        <div id="dataTable">
+            <div id="dataContent"></div>
         </div>
 
         <button id="trainBtn">Train Model</button>

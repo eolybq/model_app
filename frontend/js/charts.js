@@ -1,6 +1,6 @@
 export function drawChart(containerId, data, stockName) {
     const dates = data.map(item => item.date)
-    const prices = data.map(item => item.adjusted)
+    const prices = data.map(item => item.close)
 
     const trace = {
         x: dates,
@@ -17,7 +17,7 @@ export function drawChart(containerId, data, stockName) {
             font: { size: 20 }
         },
         xaxis: { title: { text: 'Date', font: { size: 12 } } },
-        yaxis: { title: { text: 'Price (USD)', font: { size: 12 } } }
+        yaxis: { title: { text: 'Close (USD)', font: { size: 12 } } }
     }
 
     Plotly.newPlot(containerId, [trace], layout)

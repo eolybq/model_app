@@ -2,32 +2,128 @@ import { drawChart } from './charts.js'
 
 let stockChosen = null
 let modelChosen = null
-const stockList = document.getElementById('stockList')
-const selectBtn = document.getElementById('selectBtn')
+const fetchStockBtn = document.getElementById('fetchStockBtn')
 const plot = document.getElementById('plot')
 const showDataBtn = document.getElementById('showData')
 const errorMsgStock = document.getElementById('errorMsgStock')
 const errorMsgModel = document.getElementById('errorMsgModel')
 
-// TODO: pridat i monznost zvoleni frekvence dat (denni, tydenni, mesicni)
-// pridat input pro sticker name akcie
+const startDate = document.getElementById('startDate')
+const endDate = document.getElementById('endDate')
 
-let availableStocks = []
-// ziskani seznamu akcii ze serveru
-fetch('http://localhost:5055/api/stocks')
-    .then(res => res.json())
-    .then(data => {
-        if (data.stocks) {
-            availableStocks = data.stocks
 
-            stockButtons(availableStocks)
+// Nemoznost vybrat end date mensi nez start date a naopak
+startDate.addEventListener('change', () => {
+  endDate.min = startDate.value
+  if (endDate.value && endDate.value < startDate.value) endDate.value = startDate.value
+})
+
+endDate.addEventListener('change', () => {
+  startDate.max = endDate.value
+  if (startDate.value && startDate.value > endDate.value) startDate.value = endDate.value
+})
+
+
+
+// Uzivatel zada ticker -> poslat ticker na server a vykreslit graf
+const stockInput = document.getElementById('stockInput')
+stockInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        event.preventDefault()
+        const stock = stockInput.value.trim()
+        if (stock) {
+            selectStock(stock)
         } else {
-            errorMsgStock.textContent = data.error || 'Error while loading data.'
+            errorMsgStock.textContent = 'Please enter a stock symbol.'
         }
+    }
+})
+
+fetchStockBtn.onclick = () => {
+    const stock = stockInput.value.trim()
+    if (stock) {
+        selectStock(stock)
+    } else {
+        errorMsgStock.textContent = 'Please enter a stock symbol.'
+    }
+}
+
+// Vybrat akcii a načíst graf
+function selectStock(stock) {
+    stockChosen = stock
+
+    const stockDataInputs = document.getElementById('stockDataInputs')
+    stockDataInputs.style.display = 'block'
+    errorMsgStock.textContent = ''
+    errorMsgModel.textContent = ''
+    plot.style.display = 'none'
+
+    const container = document.getElementById('featuresList')
+
+    container.innerHTML = ""
+
+    modelButtons(availableModels)
+
+
+    // graf na client side
+    fetch(`http://localhost:5055/api/${stockChosen}/ticker`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.data) {
+                plot.style.display = 'block'
+                drawChart(plot, data.data, stockChosen.toUpperCase())
+            } else {
+                errorMsgStock.textContent = data.error || 'Error while loading data.'
+            }
+
+            // Nastavení rozsahu a výchozích hodnot pro datum z dat ze serveru
+            const minDate = data.min_date
+            const maxDate = data.max_date
+
+            // nastav rozsahy
+            startDate.min = minDate
+            startDate.max = maxDate
+            endDate.min = minDate
+            endDate.max = maxDate
+
+            // výchozí hodnoty (např. start = min, end = max)
+            startDate.value = minDate
+            endDate.value = maxDate
+
+        })
+        .catch(() => {
+            errorMsgStock.textContent = 'Error while communicating with server.'
+        })
+}
+
+
+
+
+const freqList = document.getElementById('freqList')
+const freqSelectBtn = document.getElementById('freqSelectBtn')
+const buttons = document.querySelectorAll('.freqOption')
+
+buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+        selectFreq(btn.textContent, btn.dataset.value)
     })
-    .catch(err => {
-        errorMsgStock.textContent = 'Error while communicating with server:' + ' ' + err.message
-    })
+})
+
+// Zobrazit/skryt seznam frekvencí
+freqSelectBtn.onclick = () => {
+    if (stockChosen != null) {
+        freqList.style.display = freqList.style.display === 'block' ? 'none' : 'block'
+    }
+}
+
+function selectFreq(displayText, value) {
+    freqSelectBtn.textContent = displayText
+    freqSelectBtn.dataset.value = value
+    freqList.style.display = 'none'
+    errorMsgStock.textContent = ''
+}
+
+
 
 
 let availableModels = []
@@ -46,87 +142,12 @@ fetch('http://localhost:5055/api/models')
     })
 
 
-// Vytvoření seznamu tlačítek pro akcie
-function stockButtons(stocks) {
-    stocks.forEach(stock => {
-        const btn = document.createElement('button')
-        btn.textContent = stock.toUpperCase()
-        btn.onclick = () => selectStock(stock)
-        stockList.appendChild(btn)
-    })
-}
-
-// Zobrazit/skryt seznam akcií
-selectBtn.onclick = () => {
-    stockList.style.display = stockList.style.display === 'block' ? 'none' : 'block'
-}
-
 function clearCapitalizeFirst(str) {
     const clearSr = str.replace(/_/g, ' ').replace(/-/g, ' ') 
     return clearSr.charAt(0).toUpperCase() + clearSr.slice(1)
 }
 
 
-
-
-
-
-// Vybrat akcii a načíst graf
-function selectStock(stock) {
-    stockChosen = stock
-    availableFeatures = []
-
-
-    selectBtn.textContent = stock.toUpperCase()
-    stockList.style.display = 'none'
-    errorMsgStock.textContent = ''
-    errorMsgModel.textContent = ''
-    plot.style.display = 'none'
-    showDataBtn.style.display = 'none'
-
-
-    const container = document.getElementById('featuresList')
-
-    container.innerHTML = ""
-
-    modelButtons(availableModels)
-
-
-    // graf na client side
-    fetch(`http://localhost:5055/api/stock/${stock}/adjusted`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.data) {
-                plot.style.display = 'block'
-                drawChart(plot, data.data, stockChosen.toUpperCase())
-
-                // tlacitko pro prolhidku dat dostupne
-                showDataBtn.style.display = 'block'
-            } else {
-                errorMsgStock.textContent = data.error || 'Error while loading data.'
-            }
-        })
-        .catch(() => {
-            errorMsgStock.textContent = 'Error while communicating with server.'
-        })
-
-
-    // ziskani vsechny dostupne features pro danou akcii
-    fetch(`http://localhost:5055/api/get_features/${stock}`)
-        .then(res => res.json())
-        .then(data => {
-
-            if (data.features) {
-                const features = data.features
-                availableFeatures = features
-            } else {
-                errorMsgModel.textContent = data.error || 'Error while loading data.'
-            }
-        })
-        .catch(() => {
-            errorMsgModel.textContent = 'Error while communicating with server.'
-        })
-}
 
 
 // funkce na zobrazeni dat v tabulatorJS
@@ -138,8 +159,8 @@ function showData(columns, rows) {
             height: 900,
             data: rows,
             layout: "fitDataStretch",
-            // autoColumns: true,
-            columns: columns,
+            autoColumns: true,
+            // columns: columns,
             responsiveLayout: false,   // jinak by některé sloupce mizely
         })
     } else {
@@ -169,18 +190,40 @@ function escTableHandler(e) {
 
 // Zobrazit/skryt data prohlizec
 showDataBtn.onclick = () => {
-    document.getElementById("dataTable").style.display = "block"
+    errorMsgModel.textContent = ''
 
+    if (freqSelectBtn.textContent === "Choose timeframe") {
+        errorMsgModel.textContent = 'Please select a timeframe first.'
+        return
+    }
+
+    if (window.currentLag) {
+        saveFeatures(window.currentLag)
+    }
+
+    console.log(lagFeatures)
+
+    document.getElementById("dataTable").style.display = "block"
     document.getElementById("dataTable").addEventListener("mousedown", closeTableHandler)
     document.addEventListener("keydown", escTableHandler)
 
 
-    fetch(`http://localhost:5055/api/stock/${stockChosen}/data`)
+    fetch(`http://localhost:5055/api/${stockChosen}/df_data`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            features: lagFeatures,
+            start_date: startDate.value,
+            end_date: endDate.value,
+            interval: freqSelectBtn.dataset.value
+        }),
+    })
     .then(res => res.json())
     .then(data => {
         if (data.df) {
-            // FIX: nefunguje vubec nejak udelat aby zustalo poradi columns ze serveru
-            const columns = data.df.columns
+            const columns = data.df.columns.map(col => clearCapitalizeFirst(col))
             const rows = data.df.data.map(row =>
                 Object.fromEntries(columns.map((col, i) => [col, row[i]]))
             )
@@ -238,7 +281,7 @@ function selectModel(model) {
 
 
 // Dynamický výpis feature checkboxů a lagů
-let availableFeatures = []
+let availableFeatures = ["log_return", "high", "low", "close", "volume", "ema10", "ema50", "rsi", "atr"]
 let lagFeatures = {}
 
 function showFeatures(features, lag) {
@@ -299,22 +342,22 @@ radios.forEach(radio => radio.checked = false)
 
 
 
-// Learning Rate a epochy
+// Learning Rate a epochy ttSplit
 const eSlider = document.getElementById('epochsSlider')
 const eNumberInput = document.getElementById('epochsNumber')
 
 // Když se posune slider → aktualizuje number input
 eSlider.addEventListener('input', () => {
-  eNumberInput.value = eSlider.value
+    eNumberInput.value = eSlider.value
 })
 
 // Když uživatel změní number input → aktualizuje slider
 eNumberInput.addEventListener('input', () => {
-  let val = Number(eNumberInput.value)
-  if (val < 1) val = 1        // minimum
-  if (val > 10000) val = 10000    // maximum
-  eNumberInput.value = val
-  eSlider.value = val
+    let val = Number(eNumberInput.value)
+    if (val < 1) val = 1        // minimum
+    if (val > 10000) val = 10000    // maximum
+    eNumberInput.value = val
+    eSlider.value = val
 })
 
 
@@ -323,16 +366,33 @@ const lrNumberInput = document.getElementById('learningRateNumber')
 
 // Když se posune slider → aktualizuje number input
 lrSlider.addEventListener('input', () => {
-  lrNumberInput.value = lrSlider.value
+    lrNumberInput.value = lrSlider.value
 })
 
 // Když uživatel změní number input → aktualizuje slider
 lrNumberInput.addEventListener('input', () => {
-  let val = Number(lrNumberInput.value)
-  if (val < 0.0001) val = 0.0001        // minimum
-  if (val > 1) val = 1    // maximum
-  lrNumberInput.value = val
-  lrSlider.value = val
+    let val = Number(lrNumberInput.value)
+    if (val < 0.0001) val = 0.0001        // minimum
+    if (val > 1) val = 1    // maximum
+    lrNumberInput.value = val
+    lrSlider.value = val
+})
+
+const ttSplitSlider = document.getElementById('ttSplitSlider')
+const ttSplitNumber = document.getElementById('ttSplitNumber')
+
+// Když se posune slider → aktualizuje number input
+ttSplitSlider.addEventListener('input', () => {
+    ttSplitNumber.value = ttSplitSlider.value
+})
+
+// Když uživatel změní number input → aktualizuje slider
+ttSplitNumber.addEventListener('input', () => {
+    let val = Number(ttSplitNumber.value)
+    if (val < 0) val = 0        // minimum
+    if (val > 100) val = 100    // maximum
+    ttSplitNumber.value = val
+    ttSplitSlider.value = val
 })
 
 
@@ -362,12 +422,19 @@ trainBtn.onclick = () => {
 
 // Odeslání požadavku na trénování modelu
 function trainModel() {
-    let modelParams = {}
+    let modelParams = {
+        model_type: modelChosen,
+        features: lagFeatures,
+        learning_rate: parseFloat(lrNumberInput.value),
+        epochs: parseInt(eNumberInput.value),
+        tt_split: parseInt(ttSplitNumber.value)
+    }
 
-    modelParams.model_type = modelChosen
-    modelParams.features = lagFeatures
-    modelParams.learning_rate = parseFloat(lrNumberInput.value)
-    modelParams.epochs = parseInt(eNumberInput.value)
+    let stockInfo = {
+        start_date: startDate.value,
+        end_date: endDate.value,
+        interval: freqSelectBtn.dataset.value
+    }
 
 
     fetch(`http://localhost:5055/api/${stockChosen}/train`, {
@@ -375,13 +442,12 @@ function trainModel() {
         headers: {
             "Content-Type": "application/json"
         },
-        body: JSON.stringify(modelParams)
+        body: JSON.stringify({ "model_params": modelParams, "stock_info": stockInfo })
     })
         .then(res => res.json())
         .then(data => {
             if (data.message) {
-                errorMsgModel.style.color = 'green'
-                errorMsgModel.textContent = data.message
+                alert(data.message)
             } else {
                 errorMsgModel.textContent = data.error || 'Error while training model.'
             }
