@@ -14,14 +14,16 @@ def fetch_save_ticker(ticker):
     data.index = data.index.tz_localize(None)
 
     data.columns = data.columns.str.lower()
-    print(data)
+    data = data.drop(columns=['dividends', 'stock splits'], axis=1)
+    data["log_return"] = np.log(data["close"] / data["close"].shift(1))
+    data = data.dropna()
 
     # presun date z indexu do sloupce a vytvoreni ciselneho indexu -> lepsi manipulace s daty
+    # NOTE: musi se opravit index aby zacinal od 0 kvuli odhozenemu prvnimu radku NA
     data = data.reset_index(names='date')
     data['date'] = pd.to_datetime(data['date'])
 
-    data["log_return"] = np.log(data["close"] / data["close"].shift(1))
-    data = data.drop(columns=['dividends', 'stock splits'], axis=1)
+
 
     data.to_csv(f"data/{ticker}.csv", index=False)
     return data
@@ -40,7 +42,7 @@ def load_user_data(ticker, start, end, interval="1d"):
 
     if interval == "1week":
         # Weekly OHLCV s obchodní den nastaveno na realny posledni obchodni den v tydnu
-        df = df.groupby(pd.Grouper(key='Date', freq='W-FRI'), as_index = False).agg({
+        df = df.groupby(pd.Grouper(key='date', freq='W-FRI'), as_index = False).agg({
             "date": "last",
             "open": "first",
             "high": "max",
@@ -52,7 +54,7 @@ def load_user_data(ticker, start, end, interval="1d"):
 
     if interval == "1month":
         # Monthly OHLCV s obchodní den realny posledni obchodni den v mesici
-        df = df.groupby(pd.Grouper(key='Date', freq='M'), as_index = False).agg({
+        df = df.groupby(pd.Grouper(key='date', freq='M'), as_index = False).agg({
             "date": "last",
             "open": "first",
             "high": "max",
@@ -63,7 +65,7 @@ def load_user_data(ticker, start, end, interval="1d"):
 
     if interval == "3month":
         # Monthly OHLCV s obchodní den realny posledni obchodni den v mesici
-        df = df.groupby(pd.Grouper(key='Date', freq='3M'), as_index = False).agg({
+        df = df.groupby(pd.Grouper(key='date', freq='3M'), as_index = False).agg({
             "date": "last",
             "open": "first",
             "high": "max",

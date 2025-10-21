@@ -5,7 +5,7 @@ import os
 import pandas as pd
 
 from services.data_manipulation import fetch_save_ticker, load_user_data
-from services.prepare_features import lag_features, calculate_features, ema_model, rsi_model, atr_model
+from services.prepare_features import lag_features, calculate_features
 
 from models.arima import arima_model
 
@@ -35,6 +35,7 @@ def post_ticker(ticker):
     except Exception as e:
         return {"error": str(e)}, 500
 
+
 # Poslat seznam dostupných modelů
 @app.route("/api/models", methods=["GET"])
 def get_models():
@@ -46,6 +47,7 @@ def get_models():
     except Exception as e:
         return {"error": str(e)}, 500
 
+
 # Nahrani celeho df na client side
 @app.route("/api/<string:ticker>/df_data", methods=["POST", "GET"])
 def get_df_data(ticker):
@@ -54,10 +56,9 @@ def get_df_data(ticker):
         if not data:
             return {"error": "No data provided"}, 400
         
-        df = load_user_data(ticker, data.get("start_date"), data.get("end_date"), data.get("interval"))
+        df = load_user_data(ticker, data["start_date"], data["end_date"], data["interval"])
 
-        if data["features"]:
-            out = calculate_features(data.get("features"), df)
+        out = calculate_features(data["features"], df)
 
         print(data["features"])
         out = out.round(3)
@@ -80,17 +81,16 @@ model_params = {
     "epochs": 100,
     "batch_size": 32,
     "tt_split": 80
-# TODO: pridat ORDER na ARIMA
 }
 
 models_dict = {
-    "logit": logit,
+    # "logit": logit,
     "arima": arima_model,
-    "rnn": rnn,
-    "gradient_lr": gradient
+    # "rnn": rnn,
+    # "gradient_lr": gradient
 }
         
-# Získat parametry modelu
+# Získat parametry modelu a -> train
 @app.route("/api/<string:ticker>/train", methods=["POST"])
 def post_model(ticker):
     try:
@@ -98,14 +98,14 @@ def post_model(ticker):
         if not data:
             return {"error": "No data provided"}, 400
 
-        model_params_in = data.get("model_params", {})
+        model_params_in = data["model_params"]
         for param in model_params_in:
             if param in model_params:
                model_params[param] = model_params_in[param]
 
-        stock_info = data.get("stock_info", {})
+        stock_info = data["stock_info"]
 
-        df = load_user_data(ticker, stock_info.get("start_date"), stock_info.get("end_date"), stock_info.get("interval"))
+        df = load_user_data(ticker, stock_info["start_date"], stock_info["end_date"], stock_info["interval"])
 
         unique_features_df = calculate_features(model_params["features"], df)
         lag_df = lag_features(model_params["features"], unique_features_df)
@@ -114,7 +114,7 @@ def post_model(ticker):
         split_point = int(len(lag_df) * ((model_params["tt_split"] / 100)))
         train_df, test_df = lag_df.iloc[:split_point], lag_df.iloc[split_point:]
 
-        model_function = models_dict.get(model_params["model_type"])
+        model_function = models_dict[model_params["model_type"]]
         model_function(train_df, test_df, model_params)
 
         return {"message": "Model parameters updated", "model_params": model_params}, 200

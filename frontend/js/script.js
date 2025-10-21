@@ -230,11 +230,11 @@ showDataBtn.onclick = () => {
             console.log(rows)
             showData(columns, rows)
         } else {
-            errorMsgStock.textContent = data.error || 'Error while loading data.'
+            errorMsgModel.textContent = data.error || 'Error while loading data.'
         }
     })
     .catch(() => {
-        errorMsgStock.textContent = 'Error while communicating with server.'
+        errorMsgModel.textContent = 'Error while communicating with server.'
     })
 }
 
@@ -342,58 +342,114 @@ radios.forEach(radio => radio.checked = false)
 
 
 
-// Learning Rate a epochy ttSplit
-const eSlider = document.getElementById('epochsSlider')
-const eNumberInput = document.getElementById('epochsNumber')
+// MODEL PARAMS - dynamicky dle vybraneho modelu se pridavaji do DOM
+// TODO: ASI NAPSAT JAKO FUNKCE A VOLAT JE DLE VYBRANEHO MODELU? JAKOZE MIT PAK NEJAKY OBJEKT FUNKCI? IDK NEBO PROSTE DLE PODMINKY NEBO TAK - proste volat vczdy dle modelu a vytvorit mParams dle nej
+const mParamsContainer = document.getElementById("modelParams")
 
-// Když se posune slider → aktualizuje number input
-eSlider.addEventListener('input', () => {
-    eNumberInput.value = eSlider.value
+
+// NOTE: obecne mParams - zahrnuje vetsinu
+const mParamsDom = [
+    {
+        label: "Train/Test Split",
+        name: "ttSplit",
+        min: 0, max: 100, step: 1, value: 80
+    },
+    {
+        label: "Learning Rate",
+        name: "learningRate",
+        min: 0.0001, max: 1, step: 0.0001, value: 0.001
+    },
+    {
+        label: "Epochs",
+        name: "epochs",
+        min: 100, max: 10000, step: 100, value: 100
+    },
+    {
+        label: "Order",
+        name: "order",
+
+    }
+]
+
+mParamsDom.forEach(param => {
+    // Label
+    const label = document.createElement("label")
+    label.for = param.name + "Slider"
+    label.textContent = param.label
+    mParamsContainer.appendChild(label)
+
+    // Slider
+    const slider = document.createElement("input")
+    slider.type = "range"
+    slider.id = param.name + "Slider"
+    slider.name = param.name
+    slider.min = param.min
+    slider.max = param.max
+    slider.step = param.step
+    slider.value = param.value
+    mParamsContainer.appendChild(slider)
+
+    // Number input
+    const numberInput = document.createElement("input")
+    numberInput.type = "number"
+    numberInput.id = param.name + "Number"
+    numberInput.name = param.name
+    numberInput.min = param.min
+    numberInput.max = param.max
+    numberInput.step = param.step
+    numberInput.value = param.value
+    mParamsContainer.appendChild(numberInput)
+
+    // propojení slider ↔ number input
+    slider.addEventListener("input", () => numberInput.value = slider.value)
+    numberInput.addEventListener("input", () => {
+        let val = Number(numberInput.value)
+        if (val < param.min) val = param.min
+        if (val > param.max) val = param.max
+        numberInput.value = val
+        slider.value = val
+    })
 })
 
-// Když uživatel změní number input → aktualizuje slider
-eNumberInput.addEventListener('input', () => {
-    let val = Number(eNumberInput.value)
-    if (val < 1) val = 1        // minimum
-    if (val > 10000) val = 10000    // maximum
-    eNumberInput.value = val
-    eSlider.value = val
+
+// NOTE: primo arima params
+const arimaParams = [
+    {
+        label: "Train/Test Split",
+        name: "ttSplit",
+        min: 0, max: 100, step: 1, value: 80
+    },
+    {
+        label: "ARIMA Order (p,d,q)",
+        name: "order",
+        type: "text",
+        value: "30,0,0"
+    },
+    {
+        label: "Refit Model",
+        name: "refit",
+        type: "checkbox",
+        value: false
+    }
+]
+
+arimaParams.forEach(param => {
+    // Label
+    const label = document.createElement("label")
+    label.for = param.name
+    label.textContent = param.label
+    mParamsContainer.appendChild(label)
+
+    // Input
+    const input = document.createElement("input")
+    input.type = param.type
+    input.id = param.name
+    input.name = param.name
+    if (param.type === "checkbox") input.checked = param.value
+    else input.value = param.value
+    mParamsContainer.appendChild(input)
 })
 
-
-const lrSlider = document.getElementById('learningRateSlider')
-const lrNumberInput = document.getElementById('learningRateNumber')
-
-// Když se posune slider → aktualizuje number input
-lrSlider.addEventListener('input', () => {
-    lrNumberInput.value = lrSlider.value
-})
-
-// Když uživatel změní number input → aktualizuje slider
-lrNumberInput.addEventListener('input', () => {
-    let val = Number(lrNumberInput.value)
-    if (val < 0.0001) val = 0.0001        // minimum
-    if (val > 1) val = 1    // maximum
-    lrNumberInput.value = val
-    lrSlider.value = val
-})
-
-const ttSplitSlider = document.getElementById('ttSplitSlider')
-const ttSplitNumber = document.getElementById('ttSplitNumber')
-
-// Když se posune slider → aktualizuje number input
-ttSplitSlider.addEventListener('input', () => {
-    ttSplitNumber.value = ttSplitSlider.value
-})
-
-// Když uživatel změní number input → aktualizuje slider
-ttSplitNumber.addEventListener('input', () => {
-    let val = Number(ttSplitNumber.value)
-    if (val < 0) val = 0        // minimum
-    if (val > 100) val = 100    // maximum
-    ttSplitNumber.value = val
-    ttSplitSlider.value = val
-})
 
 
 // podminky pro validitu vstupnich parametru do modelu
