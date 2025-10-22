@@ -7,7 +7,8 @@ import pandas as pd
 from services.data_manipulation import fetch_save_ticker, load_user_data
 from services.prepare_features import lag_features, calculate_features
 
-from models.arima import arima_model
+#TODO: VYZKOUSET A KDYZTAK PREPSAT
+from models import *
 
 load_dotenv()
 
@@ -87,7 +88,7 @@ models_dict = {
     # "logit": logit,
     "arima": arima_model,
     # "rnn": rnn,
-    # "gradient_lr": gradient
+    "gradient_lr": gradient_lr_model
 }
         
 # Získat parametry modelu a -> train
@@ -110,12 +111,8 @@ def post_model(ticker):
         unique_features_df = calculate_features(model_params["features"], df)
         lag_df = lag_features(model_params["features"], unique_features_df)
 
-
-        split_point = int(len(lag_df) * ((model_params["tt_split"] / 100)))
-        train_df, test_df = lag_df.iloc[:split_point], lag_df.iloc[split_point:]
-
         model_function = models_dict[model_params["model_type"]]
-        model_function(train_df, test_df, model_params)
+        model_function(lag_df, model_params)
 
         return {"message": "Model parameters updated", "model_params": model_params}, 200
     except Exception as e:
