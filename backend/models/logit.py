@@ -65,6 +65,10 @@ def logit_model(lag_df, model_params):
     y_pred_test = sigmoid(np.dot(X_test, weight) + bias)
     y_pred_class = (y_pred_test > model_params["y_threshold"]).astype(int)
 
+
+    # TODO: dodealt return struct jak ostatni models
+
+
     print(f"Trefeno 1: {np.sum((y_pred_class == y_test) & (y_pred_class == 1))} Trefeno 0: {np.sum((y_pred_class == y_test) & (y_pred_class == 0))}, Celkem: {len(y_pred_class)}")
 
     print("Test accuracy:", accuracy_score(y_test, y_pred_class))

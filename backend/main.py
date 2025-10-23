@@ -78,10 +78,13 @@ def get_df_data(ticker):
 model_params = {
     "model_type": "grad",
     "features": {},
+    "tt_split": 80,
     "learning_rate": 0.001,
     "epochs": 100,
     "batch_size": 32,
-    "tt_split": 80
+    "neurons": 256,
+    "seq_len": 64,
+    "activation_func": "tanh"
 }
 
 models_dict = {
@@ -110,6 +113,7 @@ def post_model(ticker):
 
         unique_features_df = calculate_features(model_params["features"], df)
         lag_df = lag_features(model_params["features"], unique_features_df)
+        lag_df = lag_df.dropna()
 
         model_function = models_dict[model_params["model_type"]]
         model_function(lag_df, model_params)
