@@ -1,4 +1,9 @@
 # Project Documentation `model_app`
+- ! THIS PROJECT IS CURRENTLY IN-PROGRESS - SOME FEATURES ISN'T IMPLEMENTED YET
+
+- This project creates website, where user can fetch live financial data for pleasured stock ticker, then choose statstical or machine learning model, tune according hyperparameters and watch how model performs in these conditions. 
+- User can tweak parametrs of stock data aswell - choose freqency (1 day, 1 week, 1 month, 3 months), start/end time
+
 
 ## Project Structure
 model_app/
