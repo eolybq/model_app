@@ -1,107 +1,44 @@
-# Dokumentace projektu `model_app`
+# Project Documentation `model_app`
 
-## 1. Struktura projektu
+## Project Structure
 model_app/
-│
-├─ data/
-│ └─ tsla.csv # CSV soubor s daty akcie
-│
-├─ static/
-│ ├─ index.html # frontend stránka
-│ ├─ script.js # JS pro interakci s backendem
-│ └─ style.css # CSS styly
-│
-├─ .env # environmentální proměnné (např. SECRET_KEY)
-└─ main.py # hlavní Flask backend
+├── backend/
+│   ├── main.py             # main Python file for the Flask backend server
+│   ├── data/
+│   │   └── # central folder with global data for each stock, full time series with daily intervals
+│   ├── models/
+│   │   └── # Python scripts with various prediction models
+│   ├── rnn/
+│   │   └── # folder for handling larger RNN models, storing checkpoints and trained .keras models
+│   └── services/
+│       └── # Python scripts for data manipulation – from API fetching, preprocessing, feature calculations, to creating lags
+├── frontend/
+│   ├── index.html           # main frontend HTML file
+│   ├── js/
+│       └── # frontend scripts using JavaScript
 
 
+## Installation
 
-## 2. Instalace
-
-Vytvořit virtuální prostředí:
+Create Conda environment from `environment.yml`:
 
 ```bash
-python -m venv venv
-source venv/bin/activate   # Linux/macOS
-venv\Scripts\activate      # Windows
+conda env create -f backend/environment.yml
+conda activate <environment_name>
 ```
-Instalace závislostí:
-```
-pip install requirements.txt
-```
-⚠️ Používáme matplotlib.use('Agg') kvůli headless režimu (bez GUI), což je vhodné pro server.
 
-## 3. Spuštění serveru
+
+## Running the python server
 ```
+cd backend/
 python main.py
 ```
-Backend běží na http://127.0.0.1:5000
+Backend runs at http://localhost:5055
 
-Debug mód je zapnutý (debug=True)
+Debug mode is currently enabled (debug=True)
 
-## 4. API Endpoints
-### 4.1 /api/stock/<stock> [GET]
-Vrátí graf ceny akcie jako Base64 obrázek.
-Parametry:
 
-stock – název akcie, např. tsla.
-
-### 4.2 /api/get_features/<stock> [GET]
-Vrátí seznam dostupných feature (sloupců) v CSV souboru kromě date.
-
-#### Parametry:
-
-stock – název akcie.
-
-#### Odpověď:
-
-{
-  "features": ["adjusted", "open", "high", "low", "volume"]
-}
-
-### 4.3 /api/stock/<stock>/model [POST]
-Aktualizuje parametry modelu.
-
-#### Parametry v těle requestu (JSON):
-{
-  "model_type": "grad",
-
-  "features": ["adjusted", "rsi", "ema_lag3"],
-
-  "learning_rate": 0.01,
-
-  "epochs": 100,
-
-  "batch_size": 32
-}
-
-#### Odpověď:
-{
-  "message": "Model parameters updated",
-
-  "model_params": {
-
-    "model_type": "grad",
-    "features": ["adjusted", "rsi", "ema_lag3"],
-    "learning_rate": 0.01,
-    "epochs": 100,
-    "batch_size": 32
-  }
-}
-
-## 5. Interní funkce
-
-### 5.1 load_data(stock)
-Načte CSV soubor z data/<stock>.csv do pandas.DataFrame.
-### 5.2 df_to_base64(df)
-Vytvoří graf z dataframe a vrátí jej jako Base64 string.
-
-Používá Matplotlib s backendem Agg.
-### 5.3 lag_features(df, features)
-Přidá sloupce s lagy podle názvu feature.
-
-Pokud název obsahuje _lagN (např. ema_lag3), vezme základní sloupec (ema) a posune o N řádků.
-
-Odstraní NaN řádky vzniklé posunem.
-
-Výsledek: dataframe připravený pro model.
+## Tools used
+- Python (Pandas, Numpy, Tensorflow, Flask)
+- JS (Chart.js, Tabulator.js)
+- HTML, CSS
