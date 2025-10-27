@@ -37,6 +37,7 @@ cd backend/
 python main.py
 ```
 Backend runs at http://localhost:5055
+
 Debug mode is currently enabled (debug=True)
 ```
 cd frontend/
