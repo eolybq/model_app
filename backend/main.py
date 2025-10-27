@@ -38,6 +38,7 @@ def post_ticker(ticker):
 
 
 # Poslat seznam dostupných modelů
+# TODO: fix ze tam je i init.py
 @app.route("/api/models", methods=["GET"])
 def get_models():
     try:
