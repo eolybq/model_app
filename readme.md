@@ -31,14 +31,18 @@ conda activate <environment_name>
 ```
 
 
-## Running the python server
+## Running the website
 ```
 cd backend/
 python main.py
 ```
 Backend runs at http://localhost:5055
-
 Debug mode is currently enabled (debug=True)
+```
+cd frontend/
+python -m http.server
+```
+Then go to http://localhost:5055 on your favorite browser
 
 
 ## Screenshots
