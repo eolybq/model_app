@@ -89,9 +89,9 @@ model_params = {
 
 models_dict = {
     # "logit": logit,
-    "arima": arima_model,
+    # "arima": arima_model,
     # "rnn": rnn,
-    "gradient_lr": gradient_lr_model
+    # "gradient_lr": gradient_lr_model
 }
         
 # Získat parametry modelu a -> train
