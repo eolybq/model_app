@@ -51,4 +51,3 @@ Then go to http://localhost:5055 on your favorite browser
 ![Model selection](assets/model.png)
 ![Features and lag selection](assets/features.png)
 ![Data browsing](assets/data.png)
-
